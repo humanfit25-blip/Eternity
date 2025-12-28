@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Humanfit - Mesociclo Fuerza 4 Semanas</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f8f9fa; }
+        .week { background: white; margin: 20px 0; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .session { background: #e3f2fd; margin: 15px 0; padding: 20px; border-left: 4px solid #2196f3; }
+        .rpe-input { padding: 10px; border: 2px solid #ddd; border-radius: 8px; width: 60px; }
+        .ai-feedback { background: #e8f5e8; padding: 15px; border-radius: 8px; margin-top: 10px; display: none; }
+        button { background: #2563eb; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .progress { background: #10b981; height: 8px; border-radius: 4px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🏋️ Humanfit Fuerza - Mesociclo 4 Semanas (15 sesiones)</h1>
+    
+    <div id="weeks-container">
+        <!-- SESIONES GENERADAS POR IA -->
+    </div>
+    
+    <div style="margin-top: 30px;">
+        <input id="client-feedback" placeholder="Ej: 'Squat RPE9, baja 5kg semana 3'" style="width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 8px;">
+        <button onclick="personalizePlan()">🔧 Ajustar mi plan</button>
+        <div id="ai-response" class="ai-feedback"></div>
+    </div>
+
+    <script>
+        // Mock data - IA real conectaría aquí
+        const mesociclo = {
+            week1: [{name: "Squat 5x5@75%", rpe: 8}],
+            week2: [{name: "Squat 5x5@80%", rpe: 8}],
+            week3: [{name: "Squat 5x5@85%", rpe: 9}],
+            week4: [{name: "Squat 3x3@90%", rpe: 9}]
+        };
+
+        function renderWeeks() {
+            const container = document.getElementById('weeks-container');
+            container.innerHTML = '';
+            Object.entries(mesociclo).forEach(([week, sessions]) => {
+                const weekDiv = document.createElement('div');
+                weekDiv.className = 'week';
+                weekDiv.innerHTML = `
+                    <h2>Semana ${week.replace('week','')} 💪</h2>
+                    ${sessions.map(s => `
+                        <div class="session">
+                            <strong>${s.name}</strong> 
+                            <input type="number" class="rpe-input" placeholder="RPE" onchange="saveRPE('${week}', 0, this.value)">
+                            <div class="progress" style="width: ${s.rpe/10*100}%"></div>
+                        </div>
+                    `).join('')}
+                `;
+                container.appendChild(weekDiv);
+            });
+        }
+
+        async function personalizePlan() {
+            const feedback = document.getElementById('client-feedback').value;
+            // AQUÍ VERCEl FUNCTION → Claude/Grok API
+            const response = await fetch('/api/personalize', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({feedback, currentPlan: mesociclo})
+            });
+            const personalized = await response.json();
+            
+            // Actualiza plan silenciosamente
+            Object.assign(mesociclo, personalized.plan);
+            renderWeeks();
+            document.getElementById('ai-response').innerHTML = 
+                `✅ Ajustado: ${personalized.message}`;
+            document.getElementById('ai-response').style.display = 'block';
+        }
+
+        renderWeeks();
+    </script>
+</body>
+</html>
